@@ -1,0 +1,6 @@
+opencv-python
+mediapipe
+scikit-learn
+numpy
+gradio
+pandas<3.0,>=1.0
