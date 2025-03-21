@@ -101,8 +101,12 @@ with gr.Blocks(title="Hand Gesture Recognition") as interface:
 
 
 # Launch with HTTPS and the custom client
+<<<<<<< HEAD
 # Launch with HTTPS
 interface.launch(server_name="127.0.0.1",
     server_port=7860,
     ssl_certfile="cert.pem",
     ssl_keyfile="key.pem",ssl_verify=False,share=True, debug=True)
+=======
+interface.launch(server_name="0.0.0.0",server_port=7860, share=True)
+>>>>>>> 6ceddd83971cb1d0de10de3edb24e33dcd545fdf
