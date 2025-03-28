@@ -4,8 +4,6 @@ import mediapipe as mp
 import numpy as np
 import gradio as gr
 
-
-
 # Load the model
 try:
     model_dict = pickle.load(open('./model.p', 'rb'))
@@ -21,9 +19,14 @@ mp_drawing_styles = mp.solutions.drawing_styles
 hands = mp_hands.Hands(static_image_mode=False, max_num_hands=1, min_detection_confidence=0.3)
 
 # Define label dictionary
-labels_dict = {0: 'A', 1: 'B', 2: 'L',3: 'C', 4: 'D'}
+labels_dict = {0: 'A', 1: 'B', 2: 'L', 3: 'C', 4: 'D'}
+
+# Global variable to store the output string
+output_string = ""
 
 def process_frame(frame):
+    global output_string
+    
     frame = cv2.resize(frame, (640, 480))
     H, W, _ = frame.shape
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -59,9 +62,12 @@ def process_frame(frame):
             prediction = model.predict([np.asarray(data_aux)])
         
             predicted_character = labels_dict[int(prediction[0])]
-            confidence = np.max(prediction_proba) * 100  # Convert to percentage
+            confidence = np.max(prediction_proba) * 100
 
-            # Display prediction and confidence
+            if confidence > 50:
+                if not output_string or output_string[-1] != predicted_character:
+                    output_string += predicted_character
+
             display_text = f"{predicted_character} ({confidence:.1f}%)"
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, display_text, (x1, y1 - 10), 
@@ -82,27 +88,57 @@ def webcam_feed():
         if not ret:
             break
         processed_frame, prediction = process_frame(frame)
-        yield processed_frame, prediction
+        yield processed_frame, prediction, output_string
     
     cap.release()
 
-# Define Gradio interface with single webcam feed and prediction below
-with gr.Blocks(title="Hand Gesture Recognition") as interface:
-    gr.Markdown("# Real-Time sign language Recognition")
-    gr.Markdown("Show hand gestures (A, B, L) to the webcam")
-    
-    webcam_output = gr.Image(label="Live Feed", streaming=True)
-    text_output = gr.Textbox(label="Predicted Gesture", interactive=False)
-    
-    gr.Interface(fn=webcam_feed, 
-                inputs=None, 
-                outputs=[webcam_output, text_output], 
-                live=True)
+# Dummy functions for signup and login (to be implemented)
+def signup():
+    return "Signup functionality to be implemented"
 
+def login():
+    return "Login functionality to be implemented"
 
-# Launch with HTTPS and the custom client
+# Define Gradio interface with landing page
+with gr.Blocks(title="Sign Language Recognition System") as interface:
+    # Landing Page
+    with gr.Tab("Home"):
+        gr.Markdown("# Welcome to Sign Language Recognition System")
+        gr.Markdown("Translate hand gestures to text in real-time")
+        
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown("## Profile Section")
+                gr.Textbox(label="Username", value="Guest", interactive=False)
+                gr.Textbox(label="Status", value="Not logged in", interactive=False)
+            
+            with gr.Column():
+                gr.Markdown("## Get Started")
+                signup_btn = gr.Button("Sign Up")
+                login_btn = gr.Button("Login")
+        
+        signup_btn.click(fn=signup, inputs=None, outputs=gr.Textbox(label="Status Message"))
+        login_btn.click(fn=login, inputs=None, outputs=gr.Textbox(label="Status Message"))
+
+    # Recognition Interface
+    with gr.Tab("Recognition"):
+        gr.Markdown("# Real-Time Sign Language Recognition")
+        gr.Markdown("Show hand gestures (A, B, L, C, D) to the webcam")
+        
+        webcam_output = gr.Image(label="Live Feed", streaming=True)
+        text_output = gr.Textbox(label="Predicted Gesture", interactive=False)
+        string_output = gr.Textbox(label="Output String", interactive=False)
+        
+        gr.Interface(fn=webcam_feed, 
+                    inputs=None, 
+                    outputs=[webcam_output, text_output, string_output], 
+                    live=True)
+
 # Launch with HTTPS
 interface.launch(server_name="127.0.0.1",
     server_port=7860,
     ssl_certfile="cert.pem",
-    ssl_keyfile="key.pem",ssl_verify=False,share=True, debug=True)
+    ssl_keyfile="key.pem",
+    ssl_verify=False,
+    share=True,
+    debug=True)
