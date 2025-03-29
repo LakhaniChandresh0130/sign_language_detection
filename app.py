@@ -62,12 +62,14 @@ def process_frame(frame):
             prediction = model.predict([np.asarray(data_aux)])
         
             predicted_character = labels_dict[int(prediction[0])]
-            confidence = np.max(prediction_proba) * 100
+            confidence = np.max(prediction_proba) * 100  # Convert to percentage
 
-            if confidence > 50:
+            # Update output string only if confidence is high enough and character changes
+            if confidence > 50:  # You can adjust this threshold
                 if not output_string or output_string[-1] != predicted_character:
                     output_string += predicted_character
 
+            # Display prediction and confidence
             display_text = f"{predicted_character} ({confidence:.1f}%)"
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
             cv2.putText(frame, display_text, (x1, y1 - 10), 
@@ -92,47 +94,19 @@ def webcam_feed():
     
     cap.release()
 
-# Dummy functions for signup and login (to be implemented)
-def signup():
-    return "Signup functionality to be implemented"
-
-def login():
-    return "Login functionality to be implemented"
-
-# Define Gradio interface with landing page
-with gr.Blocks(title="Sign Language Recognition System") as interface:
-    # Landing Page
-    with gr.Tab("Home"):
-        gr.Markdown("# Welcome to Sign Language Recognition System")
-        gr.Markdown("Translate hand gestures to text in real-time")
-        
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("## Profile Section")
-                gr.Textbox(label="Username", value="Guest", interactive=False)
-                gr.Textbox(label="Status", value="Not logged in", interactive=False)
-            
-            with gr.Column():
-                gr.Markdown("## Get Started")
-                signup_btn = gr.Button("Sign Up")
-                login_btn = gr.Button("Login")
-        
-        signup_btn.click(fn=signup, inputs=None, outputs=gr.Textbox(label="Status Message"))
-        login_btn.click(fn=login, inputs=None, outputs=gr.Textbox(label="Status Message"))
-
-    # Recognition Interface
-    with gr.Tab("Recognition"):
-        gr.Markdown("# Real-Time Sign Language Recognition")
-        gr.Markdown("Show hand gestures (A, B, L, C, D) to the webcam")
-        
-        webcam_output = gr.Image(label="Live Feed", streaming=True)
-        text_output = gr.Textbox(label="Predicted Gesture", interactive=False)
-        string_output = gr.Textbox(label="Output String", interactive=False)
-        
-        gr.Interface(fn=webcam_feed, 
-                    inputs=None, 
-                    outputs=[webcam_output, text_output, string_output], 
-                    live=True)
+# Define Gradio interface with single webcam feed and prediction below
+with gr.Blocks(title="Hand Gesture Recognition") as interface:
+    gr.Markdown("# Real-Time Sign Language Recognition")
+    gr.Markdown("Show hand gestures (A, B, L, C, D) to the webcam")
+    
+    webcam_output = gr.Image(label="Live Feed", streaming=True)
+    text_output = gr.Textbox(label="Predicted Gesture", interactive=False)
+    string_output = gr.Textbox(label="Output String", interactive=False)
+    
+    gr.Interface(fn=webcam_feed, 
+                inputs=None, 
+                outputs=[webcam_output, text_output, string_output], 
+                live=True)
 
 # Launch with HTTPS
 interface.launch(server_name="127.0.0.1",
